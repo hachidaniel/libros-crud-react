@@ -83,7 +83,7 @@ const Libros = () => {
                 params = { id: id, name: name.trim(), description: description.trim(), title: tituloLibro.trim(), url: urls.trim(), count: count, isDeleted: true };
                 metodo = 'PUT';
 
-                url= url + '/' +id
+                url = url + '/' + id
             }
             enviarSolicitud(metodo, params);
         }
@@ -92,6 +92,17 @@ const Libros = () => {
     const enviarSolicitud = async (met, para) => {
         await axios({ method: met, url: url, data: para }).then(function (respuesta) {
             console.log(respuesta);
+            if (respuesta.status == 201) {
+                if (met == 'POST') {
+                    show_alerta('Se agrego correctamente el libro ', 'success');
+                    document.getElementById('btnCerrar').click();
+                    getListaLibros();
+                }
+                if(met =='PUT'){
+
+                }
+
+            }
         }).catch(function (error) {
             show_alerta('Error en la solicitud', 'error');
             console.log(error);
@@ -189,13 +200,13 @@ const Libros = () => {
                                         onChange={(e) => setCount(e.target.value)}></input>
                                 </div>
                                 <div className="d-grid col-6 mx-auto">
-                                    <button onClick={()=>{validarCampos()}} className="btn btn-success">
+                                    <button onClick={() => { validarCampos() }} className="btn btn-success">
                                         <i className="fa-solid fa-floppy-disk"></i>Guardar
                                     </button>
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secundary" data-bs-dismiss="modal">Cerrar</button>
+                                <button id="btnCerrar" type="button" className="btn btn-secundary" data-bs-dismiss="modal">Cerrar</button>
                             </div>
                         </div>
                     </div>
