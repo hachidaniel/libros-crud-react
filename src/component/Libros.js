@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { show_alerta } from '../functions'
+import withReactContent from "sweetalert2-react-content";
+import Swal from "sweetalert2";
 const Libros = () => {
     var url = 'https://localhost:44391/api/Libros';
     const [listaLibros, setListaLibros] = useState([]);
@@ -86,6 +88,7 @@ const Libros = () => {
                 url = url + '/' + id
             }
             enviarSolicitud(metodo, params);
+            url = 'https://localhost:44391/api/Libros';
         }
     }
 
@@ -95,20 +98,49 @@ const Libros = () => {
             if (respuesta.status == 201) {
                 if (met == 'POST') {
                     show_alerta('Se agrego correctamente el libro ', 'success');
+
+                }
+            }
+            if (respuesta.status == 204) {
+                if (met == 'PUT') {
+
+                    show_alerta('Se edito correctamente el libro ', 'success');
                     document.getElementById('btnCerrar').click();
                     getListaLibros();
-                }
-                if(met =='PUT'){
+
+                } 
+                if (met == 'DELETE') {
+
+                    show_alerta('Se elimino correctamente el libro ', 'success');
+                    //document.getElementById('btnCerrar').click();
+                    getListaLibros();
 
                 }
-
             }
+
         }).catch(function (error) {
             show_alerta('Error en la solicitud', 'error');
             console.log(error);
         });
     }
 
+    const eliminarLibro = async (id, name) => {
+        const MySwal = withReactContent(Swal);
+        MySwal.fire({
+            title: '¿Seguro de eliminar el libro ' + name + ' ?',
+            icon: 'question', text: 'No se podra dar marcha atras',
+            showCancelButton: true, confirmButtonText: 'Si, eliminar', cancelButtonText: 'Cancelar',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setId(id);
+                url = url + '/' + id
+                enviarSolicitud('DELETE',{id:id});
+                url = 'https://localhost:44391/api/Libros';
+            }else{
+                show_alerta('El producto NO fue eliminado','info');
+            }
+        });
+    }
     return (
         <>
             <div className="App">
@@ -152,7 +184,7 @@ const Libros = () => {
                                                         </button>
                                                     </th>
                                                     <th>
-                                                        <button className="btn btn-danger">
+                                                        <button onClick={()=>{eliminarLibro(listaLibro.id, listaLibro.name)}}  className="btn btn-danger">
                                                             <i className="fa-solid fa-trash"></i>
                                                         </button>
                                                     </th>
