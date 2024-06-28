@@ -15,7 +15,7 @@ const Libros = () => {
     const [operacion, setOperacion] = useState(1);
     const [id, setId] = useState(1);
     const [tituloLibro, setTituloLibro] = useState('');
-
+    const [totalLibros, setTotalLibros] = useState(0);
     useEffect(() => {
         getListaLibros();
     }, []);
@@ -27,6 +27,11 @@ const Libros = () => {
 
             setListaLibros(response.data);
             console.log(response.data);
+            let contador = 0;
+            for (let i = 0; i < response.data.length; i++) {
+                contador++;
+            }
+            setTotalLibros(contador);
         }).catch((err) => {
             console.log(err);
             setListaLibros([]);
@@ -79,7 +84,7 @@ const Libros = () => {
             show_alerta('Agrega una cantidad de libro', 'warning');
         } else {
             if (operacion === 1) {
-                params = { id: 0, name: name.trim(), description: description.trim(), title: tituloLibro.trim(), url: urls.trim(), count: count, isDeleted: true };
+                params = { id: totalLibros + 1, name: name.trim(), description: description.trim(), title: tituloLibro.trim(), url: urls.trim(), count: count, isDeleted: true };
                 metodo = 'POST';
             } else {
                 params = { id: id, name: name.trim(), description: description.trim(), title: tituloLibro.trim(), url: urls.trim(), count: count, isDeleted: true };
@@ -95,20 +100,21 @@ const Libros = () => {
     const enviarSolicitud = async (met, para) => {
         await axios({ method: met, url: url, data: para }).then(function (respuesta) {
             console.log(respuesta);
-            if (respuesta.status == 201) {
+            if (respuesta.status == 200) {
                 if (met == 'POST') {
                     show_alerta('Se agrego correctamente el libro ', 'success');
-
+                    document.getElementById('btnCerrar').click();
+                    getListaLibros();
                 }
             }
-            if (respuesta.status == 204) {
+            if (respuesta.status == 200) {
                 if (met == 'PUT') {
 
                     show_alerta('Se edito correctamente el libro ', 'success');
                     document.getElementById('btnCerrar').click();
                     getListaLibros();
 
-                } 
+                }
                 if (met == 'DELETE') {
 
                     show_alerta('Se elimino correctamente el libro ', 'success');
@@ -134,28 +140,76 @@ const Libros = () => {
             if (result.isConfirmed) {
                 setId(id);
                 url = url + '/' + id
-                enviarSolicitud('DELETE',{id:id});
+                enviarSolicitud('DELETE', { id: id });
                 url = 'https://localhost:44391/api/Libros';
-            }else{
-                show_alerta('El producto NO fue eliminado','info');
+            } else {
+                show_alerta('El producto NO fue eliminado', 'info');
             }
         });
+
+    }
+    const libroAdquerido = async (id, nombre, title, descripcion, urls, count, isAdquerir) => {
+        const MySwal = withReactContent(Swal);
+
+        if(isAdquerir){
+            MySwal.fire({
+                title: '¿Seguro de adquerir el libro ' + nombre + ' ?',
+                icon: 'question', text: 'No se podra dar marcha atras',
+                showDenyButton:  true ,
+                //showCancelButton:  true,
+                confirmButtonText: 'Si, Adquerir',
+                //denyButtonText: 'Cancelar',//'Devolver libro',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let paramse = { id: id, name: nombre.trim(), description: descripcion.trim(), title: title.trim(), url: urls.trim(), count: count, isDeleted: false };
+                    url = url + '/' + id
+                    console.log(paramse);
+                    enviarSolicitud('PUT', paramse);
+                    url = 'https://localhost:44391/api/Libros';
+                } 
+                else {
+                    show_alerta('El libro no fue adquerido', 'info');
+                }
+            });
+        }else{
+            MySwal.fire({
+                title: '¿Seguro de adquerir el libro ' + nombre + ' ?',
+                icon: 'question', text: 'No se podra dar marcha atras',
+                showDenyButton:  true ,
+                //showCancelButton:  true,
+                confirmButtonText: 'Devolver libro',
+                //denyButtonText: 'Cancelar',//'Devolver libro',
+            }).then((result) => {
+                 if (result.isConfirmed) {
+                    let paramse = { id: id, name: nombre.trim(), description: descripcion.trim(), title: title.trim(), url: urls.trim(), count: count, isDeleted: true };
+                    url = url + '/' + id
+                    console.log(paramse);
+                    enviarSolicitud('PUT', paramse);
+                    url = 'https://localhost:44391/api/Libros';
+                }
+                else {
+                    show_alerta('El libro no fue devuelto', 'info');
+                }
+            });
+        }
+        
+
     }
     return (
         <>
             <div className="App">
                 <div className="container-fluid">
                     <div className="row mt-3">
-                        <div className="col-md-4 offset-4">
+                        <div className="col-md-2 offset-4">
                             <div className="d-grid mx-auto">
-                                <button onClick={() => { openModal(1) }} className="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalLibros">
-                                    <i className="fa-solid fa-circle-plus"></i> Añadir
+                                <button onClick={() => { openModal(1) }} className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalLibros">
+                                    <i className="fa-solid fa-circle-plus"></i> Agregar un Libro
                                 </button>
                             </div>
                         </div>
 
                     </div>
-                    <div className="row mt-3">
+                    <div className="row mt-3 offset-1">
                         <div className="col-12 col-lg-8 offset-0 offset-lg-12">
                             <div className="table-responsive">
                                 <table className="table table-bordered">
@@ -165,6 +219,8 @@ const Libros = () => {
                                             <th>Nombre</th>
                                             <th>Titulo</th>
                                             <th>Descripcion</th>
+                                            <th>Adquerir libro</th>
+                                            <th></th>
                                             <th></th>
                                             <th></th>
                                         </tr>
@@ -177,6 +233,7 @@ const Libros = () => {
                                                     <td>{(listaLibro.name)}</td>
                                                     <td>{(listaLibro.title)}</td>
                                                     <td>{(listaLibro.description)}</td>
+                                                    <td>{(listaLibro.isDeleted == true ? 'Libro libre' : 'Libro Adquerido')}</td>
                                                     <th>
                                                         <button onClick={() => { openModal(2, listaLibro.id, listaLibro.name, listaLibro.title, listaLibro.description, listaLibro.url, listaLibro.count) }} className="btn btn-warning"
                                                             data-bs-toggle='modal' data-bs-target='#modalLibros'>
@@ -184,7 +241,13 @@ const Libros = () => {
                                                         </button>
                                                     </th>
                                                     <th>
-                                                        <button onClick={()=>{eliminarLibro(listaLibro.id, listaLibro.name)}}  className="btn btn-danger">
+                                                        <button onClick={() => { libroAdquerido(listaLibro.id, listaLibro.name, listaLibro.title, listaLibro.description, listaLibro.url, listaLibro.count, listaLibro.isDeleted) }} className="btn btn-success">
+                                                            <i className="fa-solid fa-cart-plus"></i>
+                                                        </button>
+
+                                                    </th>
+                                                    <th>
+                                                        <button onClick={() => { eliminarLibro(listaLibro.id, listaLibro.name) }} className="btn btn-danger">
                                                             <i className="fa-solid fa-trash"></i>
                                                         </button>
                                                     </th>
@@ -233,12 +296,12 @@ const Libros = () => {
                                 </div>
                                 <div className="d-grid col-6 mx-auto">
                                     <button onClick={() => { validarCampos() }} className="btn btn-success">
-                                        <i className="fa-solid fa-floppy-disk"></i>Guardar
+                                        <i className="fa-solid fa-floppy-disk"></i>  Guardar
                                     </button>
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button id="btnCerrar" type="button" className="btn btn-secundary" data-bs-dismiss="modal">Cerrar</button>
+                                <button id="btnCerrar" type="button" className="btn btn-secondary" data-bs-dismiss="modal"> <i className="fa-solid fa-sign-out"></i> </button>
                             </div>
                         </div>
                     </div>
